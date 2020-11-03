@@ -74,7 +74,7 @@ values
 --creating different tables for normalization using er relation
 --uc11
 
---Creating company table 
+--Creating company table (c)
 create table company 
 (CompanyId int primary key  not null ,
 CompanyName varchar(150) not null);
@@ -84,7 +84,7 @@ values
 (100,'Capgemini');
 
 
---creating department table 
+--creating department table (c)
 create table department
 (DepartmentId int Primary Key not null,
 DepartmentName varchar(150) not null,
@@ -98,7 +98,7 @@ values
 (004,'Operations');
 
 
---creating payroll table
+--creating payroll table(c)
 create table payroll
 (EmployeeID int not null primary key,
 salary decimal not null,
@@ -113,11 +113,15 @@ values
 (2,10000,100,500,2000,7400),
 (3,40000,100,700,8000,31200);
 
+EXEC sp_rename 'payroll.EmployeeID', 'PayrollId', 'COLUMN';
+select * from payroll;
 
---creating EmployeeDepartment table for link
+
+
+--creating EmployeeDepartment table for link(c)
 create table EmployeeDepartment
-(EmployeeID int not null,
-DepartmentId int not null);
+(EmployeeID int not null ,
+DepartmentId int not null );
 --inserting into employeedepartment
 insert into EmployeeDepartment
 values
@@ -125,6 +129,9 @@ values
 (2,002),
 (3,003),
 (1,002);
+alter table EmployeeDepartment add constraint ff5 foreign key(EmployeeID) references employee(EmployeeID);
+alter table EmployeeDepartment add constraint ff6 foreign key(DepartmentId) references department(DepartmentId);
+select * from EmployeeDepartment;
 
 
 
@@ -139,39 +146,49 @@ delete from employee where EmployeeID=9;
 alter table employee drop constraint DF__employee___depar__267ABA7A;
 alter table employee drop column department;
 --adding companyid to employee table with default value 100
-alter table employee add CompanyId int not null default 100;
-select *from employee;
+alter table employee add CompanyId int not null   default 100;
+alter table employee add PayrollId int ; 
+alter table employee add constraint ff4 foreign key(PayrollId) references payroll(PayrollId);
+alter table employee add constraint ff7 foreign key(CompanyId) references company(CompanyId);
+select * from employee;
+update employee set PayrollId =1 where name ='kajal';
+update employee set PayrollId =2 where name ='kareena';
+update employee set PayrollId =3 where name ='katrina';
+
+
+
+
 
 --retrieving queries in uc12 with new table structure
 --uc12
 
 --uc4
-select * from employee e 
+select e.name,e.start ,e.gender,e.address,p.salary,p.Deductions,p.income_tax,p.net_pay,p.taxable_pay,d.DepartmentName
+from employee e 
 join payroll p
-on e.EmployeeID= p.EmployeeID
+on e.PayrollId= p.PayrollId
 join EmployeeDepartment ed
 on ed.EmployeeID=e.EmployeeID
 join department d 
-on d.DepartmentId=ed.DepartmentId
-join company c 
-on c.CompanyId=e.CompanyId;
+on d.DepartmentId=ed.DepartmentId;
+
 
 --uc5
-select p.* from payroll p 
+select e.name,p.salary from payroll p 
 join employee e 
-on e.EmployeeID = p.EmployeeID
+on e.PayrollId = p.PayrollId
 where e.name = 'kajal';
 
-select * from employee e
+select e.name,e.start,p.salary from employee e
 join payroll p
-on e.EmployeeID = p.EmployeeID
+on e.PayrollId = p.PayrollId
 where start between CAST('2019-06-02' AS date) and GETDATE();
 
 --uc7
 select e.gender ,sum(p.salary) as sum ,count(e.name)as count,avg(p.salary)as average,min(p.salary)as min,max(p.salary)as max
 from employee e 
 join payroll p 
-on e.EmployeeID = p.EmployeeID
+on e.PayrollId = p.PayrollId
 where e.gender='M'
 group by gender;
 
